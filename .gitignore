@@ -1,0 +1,22 @@
+# venv
+.venv/
+
+# arena tmp
+.arena_temp/
+
+# Jupyter Notebook
+*.ipynb_checkpoints
+
+secrets.txt
+
+# 
+__pycache__/
+
+#
+.env
+
+# legacy
+chatfrontend_legacy.py
+chatbackend_legacy.py
+settings_legacy.py
+
