@@ -9,27 +9,27 @@ from settings import DOMAIN_DESCRIPTIONS
 # Cargar variables desde .env
 load_dotenv()
 
-# Conexión a la base de datos PostgreSQL
-#host = os.getenv("host")
-#database = os.getenv("database")
-#user = os.getenv("user")
-#password = os.getenv("password")
+AWS_ACCESS_KEY_ID = os.environ['AWS_ACCESS_KEY']
+AWS_SECRET_ACCESS_KEY = os.environ['AWS_SECRET_KEY']
+MODEL_ID = os.environ['MODEL_ID1']
 
-#try:
-#    connection = psycopg2.connect(host=host, database=database, user=user, password=password)
-#    cursor = connection.cursor()
-#    # ... (resto del código)
-#except (Exception, psycopg2.Error) as error:
-#    print(f"Error while connecting to PostgreSQL {error}"
+bedrock_client = boto3.client(
+    'bedrock', 
+    region_name='us-west-2', 
+    aws_access_key_id=AWS_ACCESS_KEY_ID, 
+    aws_secret_access_key=AWS_SECRET_ACCESS_KEY
+    )
 
-# Set up AWS credentials
-AWS_ACCESS_KEY_ID = os.environ['AWS_ACCESS_KEY_ID']
-AWS_SECRET_ACCESS_KEY = os.environ['AWS_SECRET_ACCESS_KEY']
-
-
-bedrock_client = boto3.client('bedrock', region_name='us-west-2', aws_access_key_id=AWS_ACCESS_KEY, 
-                              aws_secret_access_key=AWS_SECRET_KEY)
-
+try:
+    # Llama al método para listar los modelos disponibles
+    response = bedrock_client.list_foundation_models()
+    
+    # Imprime la respuesta
+    print("Modelos disponibles en Bedrock:")
+    for model in response.get('modelSummaries', []):
+        print(model['modelId'])
+except Exception as e:
+    print(f"Error al acceder a Bedrock: {e}")
 
 def query_postgresql(query):
     try:
@@ -52,7 +52,7 @@ def query_postgresql(query):
 
 def get_llm(input_text):
     payload = {
-        "anthropic_version": "bedrock-05-31",
+        "anthropic_version": "bedrock-2023-05-31",
         "max_tokens": 1000,
         "messages": [
             {
@@ -65,7 +65,7 @@ def get_llm(input_text):
     payload_bytes = json.dumps(payload).encode('utf-8')
 
     response = bedrock_client.invoke_model(
-        modelId="anthropic.claude-3-5-sonnet-20240620-v1:0",
+        modelId=MODEL_ID,
         contentType='application/json',
         accept='application/json',
         body=payload_bytes
@@ -110,7 +110,74 @@ else:
 
 query_postgresql(query)
 
-#query = format_sql_response(sql_response)  # Passe a memória se necessário
-#print(query)
 
-print(response)
+
+
+#####################################################################################################################3
+sts_client = boto3.client('sts')
+
+# Qué usuario soy?
+try:
+    # Obtiene la identidad del usuario actual
+    response = sts_client.get_caller_identity()
+    
+    # Imprime los detalles del usuario
+    print("Detalles del usuario:")
+    print(f"ARN: {response['Arn']}")
+    print(f"ID de cuenta: {response['Account']}")
+    print(f"ID de usuario: {response['UserId']}")
+except Exception as e:
+    print(f"Error al obtener la identidad del usuario: {e}")
+
+# Configurar cliente AWS Bedrock
+bedrock_client = boto3.client(
+    'bedrock',
+    region_name='us-west-2',
+    aws_access_key_id=AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=AWS_SECRET_ACCESS_KEY
+)
+
+
+bedrock_runtime = boto3.client(
+    'bedrock-runtime',
+    region_name='us-west-2',
+    aws_access_key_id=AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=AWS_SECRET_ACCESS_KEY
+)
+
+
+try:
+    # Llama al método para listar los modelos disponibles
+    response = bedrock_client.list_foundation_models()
+    
+    # Imprime la respuesta
+    print("Modelos disponibles en Bedrock:")
+    for model in response.get('modelSummaries', []):
+        print(model['modelId'])
+except Exception as e:
+    print(f"Error al acceder a Bedrock: {e}")
+
+
+prompt = "¿Cuál es la capital de Francia?"
+
+try:
+    # Invoca el modelo
+    response = bedrock_runtime.invoke_model(
+        modelId=MODEL_ID,  # Modelo a usar
+        contentType="application/json",                      # Tipo de contenido
+        accept="application/json",                           # Formato de respuesta
+        body=json.dumps({
+            "prompt": prompt,                                # Pregunta o entrada
+            "max_tokens_to_sample": 100                     # Máximo número de tokens en la respuesta
+        })
+    )
+    
+    # Procesa la respuesta
+    result = json.loads(response['body'].read())
+    print("Respuesta del modelo:")
+    print(result['completion'])  # Imprime la respuesta generada por el modelo
+
+except Exception as e:
+    print(f"Error al invocar el modelo: {e}")
+
+################################################################################################################33

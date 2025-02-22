@@ -19,11 +19,19 @@ load_dotenv()
 ACCESS_KEY = os.getenv('AWS_ACCESS_KEY')
 SECRET_KEY = os.getenv('AWS_SECRET_KEY')
 
+MODEL_ID = "anthropic.claude-3-5-sonnet-20241022-v2:0"
+
+bedrock_runtime = boto3.client(
+    'bedrock-runtime',
+    region_name='us-west-2',
+    aws_access_key_id=ACCESS_KEY,
+    aws_secret_access_key=SECRET_KEY
+)
 
 def get_llm():
     llm = BedrockChat(
-        model_id="anthropic.claude-3-5-sonnet-20240620-v1:0",
-        client=bedrock_client,  # Use the same client instance
+        model_id="anthropic.claude-3-5-sonnet-20241022-v2:0",
+        client=bedrock_runtime,  # Use the same client instance
         model_kwargs={
             "temperature": 0,
             "max_tokens": 1000
@@ -31,17 +39,10 @@ def get_llm():
     )
     return llm
 
-# Configurar cliente AWS Bedrock
-bedrock_client = boto3.client(
-    'bedrock-runtime',
-    region_name='us-east-1',
-    aws_access_key_id=ACCESS_KEY,
-    aws_secret_access_key=SECRET_KEY
-)
 
 # Function to configure the LLM with AWS Bedrock using the custom class
 
-def invoke_bedrock_model(prompt, model_id='anthropic.claude-3-5-sonnet-20240620-v1:0'):
+def invoke_bedrock_model(prompt, model_id='anthropic.claude-3-5-sonnet-20241022-v2:0'):
     response = bedrock_client.invoke_model(
         modelId=model_id,
         contentType='application/json',
@@ -58,3 +59,103 @@ def invoke_bedrock_model(prompt, model_id='anthropic.claude-3-5-sonnet-20240620-
         })
     )
     return json.loads(response['body'].read().decode('utf-8'))
+
+
+def query_postgresql(query):
+    try:
+        connection = psycopg2.connect(
+            host=os.getenv("host"),
+            database=os.getenv("database"),
+            user=os.getenv("user"),
+            password=os.getenv("password")
+        )
+        cursor = connection.cursor()
+        cursor.execute(query)
+        records = cursor.fetchall()
+        column_names = [desc[0] for desc in cursor.description]
+        cursor.close()
+        connection.close()
+        return records, column_names
+    except (Exception, psycopg2.Error) as error:
+        return f"Erro ao conectar ao PostgreSQL: {error}"
+
+
+def get_sql_from_question_bedrock(question, all_domain_descriptions, memory):
+    prompt = (
+        "Você é um assistente especializado em transformar perguntas em consultas SQL.\n"
+        f"Sua tarefa é transformar a seguinte pergunta em uma consulta SQL: {question}\n\n"
+        "IMPORTANTE:\n"
+        "- Todos os campos no banco de dados estão armazenados como VARCHAR/STRING\n"
+        "- Para operações matemáticas, use CAST(campo AS TIPO), exemplo:\n"
+        "  * Para números inteiros: CAST(valor AS INTEGER)\n"
+        "  * Para decimais: CAST(valor AS DECIMAL(10,2))\n"
+        "  * Para datas: CAST(data AS DATE)\n"
+        "- Sempre use CAST ao comparar ou calcular valores numéricos\n\n"
+        "Use os seguintes domínios de dados para auxiliar na criação da consulta SQL:\n"
+        "Por favor, retorne apenas a consulta SQL dentro de um bloco ```sql```. Não inclua nenhuma outra explicação ou comentário."
+    )
+
+    # Adicionar descrições de colunas para todos os domínios
+    for domain, details in all_domain_descriptions.items():
+        schema_table = f"Schema: {details['schema']}, Tabela: {details['table']}"
+        columns_description = "\n".join([f"{col}: {desc}" for col, desc in details["columns"].items()])
+        prompt += f"\nDomínio {domain}:\n{schema_table}\n{columns_description}\n"
+
+    # Invocar o modelo Bedrock para gerar a consulta SQL
+    sql_response = invoke_bedrock_model(prompt)
+
+    # sql_response = response.choices[0].message.content.strip()  # PONTO DE ATENCAO - VERIFICAR OUTPUT DO MODELO
+    content = sql_response['content'][0]['text']  # Assuming it's always in the first item of content list
+
+    # Usar regex para extrair a consulta SQL dentro do bloco sql
+    match = re.search(r"```sql\n(.*?)\n```", content, re.DOTALL)
+    if match:
+        query = match.group(1).strip()
+    else:
+        query = content
+
+    memory.save_context({"input": question}, {"output": query})
+    return query
+
+
+def interpret_results_with_bedrock(question, results, headers, memory):
+    # Formatar a tabela para facilitar a leitura pelo modelo Bedrock
+    table = tabulate(results, headers=headers, tablefmt="grid")
+
+    prompt = (
+        "Você é um assistente inteligente. Abaixo está uma pergunta feita por um usuário, seguida de uma tabela de dados que foi retornada por uma consulta SQL."
+        "Sua tarefa é analisar esses dados e responder a pergunta do usuário de forma clara e direta, levando em consideração os cabeçalhos da tabela.\n\n"
+        f"Pergunta: {question}\n\n{table}\n\n"
+        "Interprete esses dados e responda a pergunta acima com base nos resultados fornecidos."
+    )
+
+    try:
+        # Invocar o modelo Bedrock para interpretar os resultados
+        interpretation = invoke_bedrock_model(prompt)
+        content = interpretation['content'][0]['text']  # Assuming it's always in the first item of content list
+        memory.save_context({"input": question}, {"output": content})
+        return content
+    except Exception as e:
+        return f"Erro ao interpretar os resultados: {e}"
+    
+
+def create_memory():
+    memory = ConversationBufferMemory(
+        return_messages=True,
+        memory_key="history"
+    )
+    return memory
+
+
+# Função para obter a resposta do chatbot com contexto de memória
+def get_chat_response(input_text, memory):
+    llm = get_llm()  # Utilize o LLM personalizado Bedrock
+    conversation_with_memory = ConversationChain(
+    llm=llm,
+    memory=memory,
+    verbose=True
+    )
+
+    # Gera a resposta do chatbot com o contexto atual
+    chat_response = conversation_with_memory.invoke(input=input_text)  # Passa a mensagem do usuário e o resumo para o modelo
+    return chat_response['response']
