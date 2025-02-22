@@ -18,19 +18,20 @@ load_dotenv()
 
 ACCESS_KEY = os.getenv('AWS_ACCESS_KEY')
 SECRET_KEY = os.getenv('AWS_SECRET_KEY')
+MODEL_ID = os.environ['MODEL_ID1']
+REGION = os.environ['AWS_REGION2']
 
-MODEL_ID = "anthropic.claude-3-5-sonnet-20241022-v2:0"
 
 bedrock_runtime = boto3.client(
     'bedrock-runtime',
-    region_name='us-west-2',
+    region_name=REGION,
     aws_access_key_id=ACCESS_KEY,
     aws_secret_access_key=SECRET_KEY
 )
 
 def get_llm():
     llm = BedrockChat(
-        model_id="anthropic.claude-3-5-sonnet-20241022-v2:0",
+        model_id=MODEL_ID,
         client=bedrock_runtime,  # Use the same client instance
         model_kwargs={
             "temperature": 0,
@@ -42,8 +43,8 @@ def get_llm():
 
 # Function to configure the LLM with AWS Bedrock using the custom class
 
-def invoke_bedrock_model(prompt, model_id='anthropic.claude-3-5-sonnet-20241022-v2:0'):
-    response = bedrock_client.invoke_model(
+def invoke_bedrock_model(prompt, model_id=MODEL_ID):
+    response = bedrock_runtime.invoke_model(
         modelId=model_id,
         contentType='application/json',
         accept='application/json',
@@ -77,22 +78,23 @@ def query_postgresql(query):
         connection.close()
         return records, column_names
     except (Exception, psycopg2.Error) as error:
-        return f"Erro ao conectar ao PostgreSQL: {error}"
+        return f"Error al conectar a PostgreSQL: {error}"
 
 
 def get_sql_from_question_bedrock(question, all_domain_descriptions, memory):
     prompt = (
-        "Você é um assistente especializado em transformar perguntas em consultas SQL.\n"
-        f"Sua tarefa é transformar a seguinte pergunta em uma consulta SQL: {question}\n\n"
+        "Eres un asistente especializado en transformar preguntas en consultas SQL.\n"
+        f"Tu tarea es transformar la siguiente pregunta en una consulta SQL: {question}\n\n"
         "IMPORTANTE:\n"
-        "- Todos os campos no banco de dados estão armazenados como VARCHAR/STRING\n"
-        "- Para operações matemáticas, use CAST(campo AS TIPO), exemplo:\n"
-        "  * Para números inteiros: CAST(valor AS INTEGER)\n"
-        "  * Para decimais: CAST(valor AS DECIMAL(10,2))\n"
-        "  * Para datas: CAST(data AS DATE)\n"
-        "- Sempre use CAST ao comparar ou calcular valores numéricos\n\n"
-        "Use os seguintes domínios de dados para auxiliar na criação da consulta SQL:\n"
-        "Por favor, retorne apenas a consulta SQL dentro de um bloco ```sql```. Não inclua nenhuma outra explicação ou comentário."
+        "- Todos los campos en la base de datos están almacenados como VARCHAR/STRING\n"
+        "- Para operaciones matemáticas, usa CAST(campo AS TIPO), ejemplo:\n"
+        "  * Para números enteros: CAST(valor AS INTEGER)\n"
+        "  * Para decimales: CAST(valor AS DECIMAL(10,2))\n"
+        "  * Para fechas: CAST(fecha AS DATE)\n"
+        "- Siempre usa CAST al comparar o calcular valores numéricos\n\n"
+        "Todos los nombres de las columnas deben de ir entre comillas dobles :\n"
+        "Usa los siguientes dominios de datos para ayudar en la creación de la consulta SQL:\n"
+        "Por favor, devuelve solo la consulta SQL dentro de un bloque ```sql```. No incluyas ninguna otra explicación o comentario."
     )
 
     # Adicionar descrições de colunas para todos os domínios
@@ -123,10 +125,10 @@ def interpret_results_with_bedrock(question, results, headers, memory):
     table = tabulate(results, headers=headers, tablefmt="grid")
 
     prompt = (
-        "Você é um assistente inteligente. Abaixo está uma pergunta feita por um usuário, seguida de uma tabela de dados que foi retornada por uma consulta SQL."
-        "Sua tarefa é analisar esses dados e responder a pergunta do usuário de forma clara e direta, levando em consideração os cabeçalhos da tabela.\n\n"
-        f"Pergunta: {question}\n\n{table}\n\n"
-        "Interprete esses dados e responda a pergunta acima com base nos resultados fornecidos."
+        "Eres un asistente inteligente. A continuación se muestra una pregunta hecha por un usuario, seguida de una tabla de datos que fue devuelta por una consulta SQL."
+        "Tu tarea es analizar estos datos y responder a la pregunta del usuario de manera clara y directa, teniendo en cuenta los encabezados de la tabla.\n\n"
+        f"Pregunta: {question}\n\n{table}\n\n"
+        "Interpreta estos datos y responde a la pregunta anterior en función de los resultados proporcionados."
     )
 
     try:
@@ -136,7 +138,7 @@ def interpret_results_with_bedrock(question, results, headers, memory):
         memory.save_context({"input": question}, {"output": content})
         return content
     except Exception as e:
-        return f"Erro ao interpretar os resultados: {e}"
+        return f"Error al interpretar los resultados: {e}"
     
 
 def create_memory():

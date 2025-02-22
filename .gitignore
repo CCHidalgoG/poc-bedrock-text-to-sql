@@ -1,25 +1,19 @@
 # venv
 .venv/
-
-# arena tmp
-.arena_temp/
-
 # Jupyter Notebook
 *.ipynb_checkpoints
-
-# secrets
-secrets.txt
-
-# 
+# pycache
 __pycache__/
-
-#
+# local env
 .env
-
+.env_legacy
 # legacy
 chatfrontend_legacy.py
 chatbackend_legacy.py
 settings_legacy.py
-
 # data
 data/
+# python version
+.python-version
+# app.py
+app.py

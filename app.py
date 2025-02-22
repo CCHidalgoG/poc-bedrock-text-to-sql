@@ -1,8 +1,14 @@
-import boto3
+# https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html
+# https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started-api.html
+# https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html#getting-started-model-access
+# https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started-api-ex-python.html
+# https://docs.aws.amazon.com/bedrock/latest/userguide/security_iam_id-based-policy-examples.html
+
 import json
 import re
 import os
 import psycopg2
+import boto3
 from dotenv import load_dotenv
 from settings import DOMAIN_DESCRIPTIONS
 
@@ -12,24 +18,15 @@ load_dotenv()
 AWS_ACCESS_KEY_ID = os.environ['AWS_ACCESS_KEY']
 AWS_SECRET_ACCESS_KEY = os.environ['AWS_SECRET_KEY']
 MODEL_ID = os.environ['MODEL_ID1']
+REGION = os.environ['AWS_REGION2']
 
-bedrock_client = boto3.client(
-    'bedrock', 
-    region_name='us-west-2', 
-    aws_access_key_id=AWS_ACCESS_KEY_ID, 
+bedrock_runtime = boto3.client(
+    'bedrock-runtime',
+    region_name=REGION,
+    aws_access_key_id=AWS_ACCESS_KEY_ID,
     aws_secret_access_key=AWS_SECRET_ACCESS_KEY
-    )
+)
 
-try:
-    # Llama al método para listar los modelos disponibles
-    response = bedrock_client.list_foundation_models()
-    
-    # Imprime la respuesta
-    print("Modelos disponibles en Bedrock:")
-    for model in response.get('modelSummaries', []):
-        print(model['modelId'])
-except Exception as e:
-    print(f"Error al acceder a Bedrock: {e}")
 
 def query_postgresql(query):
     try:
@@ -64,7 +61,7 @@ def get_llm(input_text):
     
     payload_bytes = json.dumps(payload).encode('utf-8')
 
-    response = bedrock_client.invoke_model(
+    response = bedrock_runtime.invoke_model(
         modelId=MODEL_ID,
         contentType='application/json',
         accept='application/json',
@@ -132,7 +129,7 @@ except Exception as e:
 # Configurar cliente AWS Bedrock
 bedrock_client = boto3.client(
     'bedrock',
-    region_name='us-west-2',
+    region_name=REGION,
     aws_access_key_id=AWS_ACCESS_KEY_ID,
     aws_secret_access_key=AWS_SECRET_ACCESS_KEY
 )
@@ -140,7 +137,7 @@ bedrock_client = boto3.client(
 
 bedrock_runtime = boto3.client(
     'bedrock-runtime',
-    region_name='us-west-2',
+    region_name=REGION,
     aws_access_key_id=AWS_ACCESS_KEY_ID,
     aws_secret_access_key=AWS_SECRET_ACCESS_KEY
 )
@@ -157,7 +154,7 @@ try:
 except Exception as e:
     print(f"Error al acceder a Bedrock: {e}")
 
-
+#############################PROMPT#############################################3
 prompt = "¿Cuál es la capital de Francia?"
 
 try:
@@ -180,4 +177,35 @@ try:
 except Exception as e:
     print(f"Error al invocar el modelo: {e}")
 
-################################################################################################################33
+################################################################################################################
+# https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started-api-ex-python.html
+from botocore.exceptions import ClientError
+
+# Create an Amazon Bedrock Runtime client.
+brt = boto3.client("bedrock-runtime")
+
+# Set the model ID, e.g., Amazon Titan Text G1 - Express.
+model_id = os.environ['MODEL_ID1']
+
+# Define the prompt for the model.
+prompt = "Describe the purpose of a 'hello world' program in one line."
+
+# Format the request payload using the model's native structure.
+native_request = {
+    "inputText": prompt,
+    "textGenerationConfig": {
+        "maxTokenCount": 512,
+        "temperature": 0.5,
+        "topP": 0.9
+    },
+}
+
+# Convert the native request to JSON.
+request = json.dumps(native_request)
+
+try:
+    # Invoke the model with the request.
+    response = brt.invoke_model(modelId=model_id, body=request)
+except (ClientError, Exception) as e:
+    print(f"ERROR: Can't invoke '{model_id}'. Reason: {e}")
+    exit(1)

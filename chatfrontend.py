@@ -5,7 +5,7 @@ from settings import DOMAIN_DESCRIPTIONS  # Importa as funções do backend
 # https://www.kaggle.com/datasets/marusagar/bank-transaction-fraud-detection
 # Configurações da página
 st.set_page_config(page_title="POC AI AGENT")
-st.title("POC AI AGENT")
+st.title("🤖 POC AI AGENT")
 
 # Inicializa a memória e o histórico de chat, se ainda não existirem
 if 'memory' not in st.session_state:

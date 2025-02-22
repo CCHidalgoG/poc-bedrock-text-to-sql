@@ -1,114 +1,115 @@
 # POC Bedrock Text-to-SQL
 
-Este projeto implementa uma aplicação web usando [Streamlit](https://streamlit.io/) que integra a AWS Bedrock e Langchain para transformar perguntas em linguagem natural em consultas SQL, executar as consultas em um banco de dados PostgreSQL, e interpretar os resultados.
+Este proyecto implementa una aplicación web usando [Streamlit](https://streamlit.io/) que integra AWS Bedrock y Langchain para transformar preguntas en lenguaje natural en consultas SQL, ejecutar las consultas en una base de datos PostgreSQL, e interpretar los resultados.
 
 ## Funcionalidades
 
-1. **Transformação de Perguntas em SQL**: O aplicativo usa a integração com o AWS Bedrock (Claude) para gerar consultas SQL a partir de perguntas em linguagem natural.
-2. **Execução de Consultas SQL**: As consultas geradas são executadas em um banco de dados PostgreSQL, e os resultados são exibidos diretamente na interface.
-3. **Interpretação dos Resultados**: A aplicação também usa o AWS Bedrock para interpretar os resultados das consultas SQL e fornecer uma explicação detalhada dos dados.
-4. **Memória de Conversação**: O chatbot mantém o histórico de interações utilizando o `ConversationSummaryBufferMemory` da Langchain, permitindo que o contexto das interações anteriores seja considerado nas conversas subsequentes.
+1. **Transformación de Preguntas en SQL**: La aplicación usa la integración con AWS Bedrock (Claude) para generar consultas SQL a partir de preguntas en lenguaje natural.
+2. **Ejecución de Consultas SQL**: Las consultas generadas se ejecutan en una base de datos PostgreSQL, y los resultados se muestran directamente en la interfaz.
+3. **Interpretación de los Resultados**: La aplicación también usa AWS Bedrock para interpretar los resultados de las consultas SQL y proporcionar una explicación detallada de los datos.
+4. **Memoria de Conversación**: El chatbot mantiene el historial de interacciones utilizando `ConversationSummaryBufferMemory` de Langchain, permitiendo que el contexto de las interacciones anteriores sea considerado en las conversaciones subsecuentes.
 
-## Pré-requisitos
+## Requisitos Previos
 
-Antes de rodar o projeto, certifique-se de ter as seguintes dependências instaladas:
+Antes de ejecutar el proyecto, asegúrese de tener las siguientes dependencias instaladas:
 
-1. **Python 3.7 ou superior**: [Download Python](https://www.python.org/downloads/)
-2. **PostgreSQL**: Certifique-se de que você tem acesso a um banco de dados PostgreSQL.
-3. **AWS CLI**: Configure suas credenciais AWS, pois o projeto utiliza o AWS Bedrock para processamento de linguagem natural. Para configurar o CLI, siga [este guia](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html).
-4. **Dependências do Projeto**: Certifique-se de ter um arquivo `.env` com as variáveis de ambiente necessárias, como as credenciais do banco de dados e as configurações da AWS.
+1. **Python 3.7 o superior**: [Descargar Python](https://www.python.org/downloads/)
+2. **PostgreSQL**: Asegúrese de tener acceso a una base de datos PostgreSQL.
+3. **AWS CLI**: Configure sus credenciales de AWS, ya que el proyecto utiliza AWS Bedrock para el procesamiento de lenguaje natural. Para configurar el CLI, siga [esta guía](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html).
+4. **Dependencias del Proyecto**: Asegúrese de tener un archivo `.env` con las variables de entorno necesarias, como las credenciales de la base de datos y las configuraciones de AWS.
 
-## Instalação
+## Instalación
 
-### 1. Clonar o Repositório
+### 1. Clonar el Repositorio
 
-Clone o repositório para o seu ambiente local:
+Clone el repositorio en su entorno local:
 ```bash
-git clone https://github.com/SEU-USUARIO/poc-bedrock-text-to-sql.git
+git clone https://github.com/SU-USUARIO/poc-bedrock-text-to-sql.git
+```
 
-
-.
-├── chatfrontend.py           # Interface de front-end usando Streamlit
-├── chatbackend.py            # Lógica de back-end para gerar e interpretar queries
-├── settings.py               # Configurações de domínio e outras definições
-├── requirements.txt          # Lista de dependências do projeto
-├── .env                      # Arquivo contendo as variáveis de ambiente
-├── README.md                 # Documentação do projeto
-└── .venv/                    # Ambiente virtual (criado automaticamente)
 ```cmd
 cd poc-bedrock-text-to-sql
+```
+
 ```cmd
 python -m venv .venv
+```
 
 ```cmd
 source .venv/bin/activate
+```
 
 ```cmd
 .venv\Scripts\activate
+```
 
 ```cmd
 pip install -r requirements.txt
+```
 
-# Configurações do PostgreSQL
-host=SEU_HOST_DO_POSTGRESQL
-database=NOME_DO_SEU_BANCO_DE_DADOS
-user=SEU_USUARIO_DO_BANCO
-password=SUA_SENHA_DO_BANCO
+# Configuraciones de PostgreSQL
+host=SU_HOST_DE_POSTGRESQL
+database=NOMBRE_DE_SU_BASE_DE_DATOS
+user=SU_USUARIO_DE_LA_BASE
+password=SU_CONTRASEÑA_DE_LA_BASE
 
-# Credenciais da AWS
-AWS_ACCESS_KEY_ID=SEU_ACCESS_KEY
-AWS_SECRET_ACCESS_KEY=SUA_SECRET_KEY
-AWS_DEFAULT_REGION=SUA_REGIAO_AWS 
+# Credenciales de AWS
+AWS_ACCESS_KEY_ID=SU_ACCESS_KEY
+AWS_SECRET_ACCESS_KEY=SU_SECRET_KEY
+AWS_DEFAULT_REGION=SU_REGION_AWS
 
-# Outras configurações, se necessário
+# Otras configuraciones, si es necesario
 
+```cmd
 streamlit run chatfrontend.py
+```
 
+### Cambios Adicionales:
+- **Sección de Entorno Virtual (venv)**: Explicación de cómo crear y activar un entorno virtual para aislar las dependencias.
+- **Sección `.env`**: Incluye más detalles sobre el archivo `.env` y cómo configurarlo.
+- **Instrucciones Detalladas para la Instalación**: Ahora detalla todos los pasos desde clonar el repositorio hasta ejecutar la aplicación con el entorno virtual.
 
-### Alterações Adicionais:
-- **Seção de Ambiente Virtual (venv)**: Expliquei como criar e ativar um ambiente virtual para isolar as dependências.
-- **Seção `.env`**: Incluí mais detalhes sobre o arquivo `.env` e como configurá-lo.
-- **Instruções Detalhadas para Instalação**: Agora detalha todos os passos desde clonar o repositório até rodar a aplicação com o ambiente virtual.
+## Requisitos Previos
 
-## Pré-requisitos
-
-Certifique-se de ter o Python e as seguintes bibliotecas instaladas:
+Asegúrese de tener Python y las siguientes bibliotecas instaladas:
 
 - pandas
 - SQLAlchemy
 - python-dotenv
-- psycopg2-binary (para conexão com o PostgreSQL)
+- psycopg2-binary (para conexión con PostgreSQL)
 
-Para instalar as dependências, rode:
+Para instalar las dependencias, ejecute:
 
 ```bash
 pip install pandas SQLAlchemy python-dotenv psycopg2-binary
+```
 
+**Detalles Específicos de la Aplicación**
+La aplicación se compone de dos componentes principales:
 
-**Detalhes Especificos da Aplicação**
-A aplicação é composta por dois principais componentes:
+Frontend: Implementado en chatfrontend.py usando Streamlit. Proporciona la interfaz de usuario para interactuar con el chatbot.
+Backend: Implementado en chatbackend.py. Contiene la lógica para transformar preguntas en consultas SQL, ejecutar consultas en PostgreSQL e interpretar los resultados usando AWS Bedrock.
 
-Frontend: Implementado em chatfrontend.py usando Streamlit. Ele fornece a interface do usuário para interagir com o chatbot.
-Backend: Implementado em chatbackend.py. Ele contém a lógica para transformar perguntas em consultas SQL, executar consultas no PostgreSQL e interpretar os resultados usando AWS Bedrock.
-Detalhes do Langchain
-Langchain é uma biblioteca que facilita a integração de modelos de linguagem com fluxos de trabalho de dados. Neste projeto, Langchain é usado para:
+**Detalles de Langchain**
+Langchain es una biblioteca que facilita la integración de modelos de lenguaje con flujos de trabajo de datos. En este proyecto, Langchain se usa para:
 
-Memória de Conversação: Utiliza ConversationSummaryBufferMemory para manter o histórico de interações.
-Cadeias de Conversação: Utiliza ConversationChain para gerenciar o fluxo de conversação entre o usuário e o chatbot.
-Modelos de Linguagem: Integração com AWS Bedrock para gerar consultas SQL e interpretar resultados.
-Para mais informações sobre Langchain, visite a documentação oficial.
+Memoria de Conversación: Utiliza `ConversationSummaryBufferMemory` para mantener el historial de interacciones.
+Cadenas de Conversación: Utiliza `ConversationChain` para gestionar el flujo de conversación entre el usuario y el chatbot.
+Modelos de Lenguaje: Integración con AWS Bedrock para generar consultas SQL e interpretar resultados.
+Para más información sobre Langchain, visite la documentación oficial.
 
-### Ativação do Modelo de Marketing no AWS Bedrock
-**Criar uma função IAM com permissões para Bedrock:**
+### Activación del Modelo de Marketing en AWS Bedrock
+**Crear una función IAM con permisos para Bedrock:**
 
-Acesse o console do IAM na AWS.
-Crie uma nova função com permissões para acessar o serviço Bedrock.
-Anexe as políticas necessárias, como AmazonBedrockFullAccess.
-Ativar o modelo de marketing:
+Acceda al consola de IAM en AWS.
+Cree una nueva función con permisos para acceder al servicio Bedrock.
+Adjunte las políticas necesarias, como AmazonBedrockFullAccess.
 
-No console do AWS Bedrock, navegue até a seção de modelos.
-Selecione o modelo de marketing (por exemplo, anthropic.claude-3-5-sonnet-20240620-v1:0).
-Siga as instruções para ativar o modelo na documentação da aws:
- https://docs.aws.amazon.com/bedrock/latest/userguide/models-regions.html
+**Activar el modelo de marketing:**
+
+En la consola de AWS Bedrock, navegue hasta la sección de modelos.
+Seleccione el modelo de marketing (por ejemplo, anthropic.claude-3-5-sonnet-20240620-v1:0).
+Siga las instrucciones para activar el modelo en la documentación de AWS:
+https://docs.aws.amazon.com/bedrock/latest/userguide/models-regions.html
 
 ![image](https://github.com/user-attachments/assets/234c351e-3412-4958-9e80-c56b1651b2f7)

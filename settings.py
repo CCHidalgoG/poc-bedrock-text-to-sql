@@ -1,3 +1,4 @@
+
 DOMAIN_DESCRIPTIONS = {
     "fraude_bancos": {
         "schema": "fraud",
