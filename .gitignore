@@ -17,3 +17,7 @@ data/
 .python-version
 # app.py
 app_test.py
+# secrets
+secrets*
+# unnecessary scripts
+tests*
